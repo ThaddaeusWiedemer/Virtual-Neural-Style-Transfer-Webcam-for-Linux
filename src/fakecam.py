@@ -8,6 +8,7 @@ import numpy as np
 from akvcam import AkvCameraWriter
 from realcam import RealCam
 from style_transfer.neural_style import StyleTransfer
+from style_transfer.neural_style_unoptimized import StyleTransferUnoptimized
 
 
 class FakeCam:
@@ -38,7 +39,7 @@ class FakeCam:
         self.styler = None
         self.set_style_number(self.style_number)
         self.is_styling = True
-        self.optimize_models()
+        # self.optimize_models()  # only needed for TensorRT-optimized models
         self.current_fps = 0
         self.last_frame = None
         self.noise_epsilon = noise_suppressing_factor
@@ -65,12 +66,12 @@ class FakeCam:
         while not self.is_stop:
             current_frame = self.real_cam.read()
             if current_frame is None:
-                # print("frame none")
                 time.sleep(0.1)
                 continue
 
             with self.styler_lock:
-                current_frame = cv2.resize(current_frame, (0, 0), fx=self.scale_factor, fy=self.scale_factor)
+                # superfluos, style transfer resizes to 720px along shortest dimension
+                # current_frame = cv2.resize(current_frame, (0, 0), fx=self.scale_factor, fy=self.scale_factor)
                 if self.is_styling:
                     current_frame = self._supress_noise(current_frame)
                     try:
@@ -81,10 +82,9 @@ class FakeCam:
             self.put_frame(current_frame)
             frame_count += 1
             td = time.monotonic() - t0
-            #print(td)
             if td > print_fps_period:
                 self.current_fps = frame_count / td
-                print("\r (FPS: {:6.2f}) Waiting for input: ".format(self.current_fps), end=" ")
+                print("(FPS: {:6.2f}) Waiting for input: ".format(self.current_fps))
                 frame_count = 0
                 t0 = time.monotonic()
         print("stopped fake cam")
@@ -115,8 +115,6 @@ class FakeCam:
         proposed_scale_factor = round(self.scale_factor + addend, 1)
         if proposed_scale_factor <= 0:
             print("scale factor cannot be smaller than 0")
-        # elif self.scale_factor+addend > 2.0:
-        #     print("a scale factor larger than 2.0")
         else:
             with self.styler_lock:
                 self.scale_factor = proposed_scale_factor
@@ -160,21 +158,18 @@ class FakeCam:
     def set_style_number(self, number, model_paths=None):
         if model_paths is None:
             model_paths = self._get_list_of_all_models(self.model_dir)
-        # if self.style_number == number:
-        #     print("style already set")
-        #     return
         if number < len(model_paths) and number > -1:
-            model_path = self._get_list_of_all_models(self.model_dir)[number]
+            model_path = model_paths[number]
             try:
                 with self.styler_lock:
                     if self.styler is None:
-                        self.styler = StyleTransfer(model_path)
+                        # Use StyleTransfer here for TensorRT-optimized models
+                        self.styler = StyleTransferUnoptimized(model_path)
                     else:
                         self.styler.load_model(model_path)
+                # print("model changed to:", model_path)
                 self.style_number = number
-                print("model changed to:", model_path)
             except Exception as e:
-                # print("style model could not be changed".format(number), e)
                 raise e
         else:
             print("model with number {} does not exist".format(number))
@@ -194,3 +189,4 @@ class FakeCam:
     # gpu tensorrt 16.8 with float16: 22
     # cpu pytorch  0.45 fps
     # cpu onnx     0.75 fps
+    # gpu GeForce 3080   13~14 fps

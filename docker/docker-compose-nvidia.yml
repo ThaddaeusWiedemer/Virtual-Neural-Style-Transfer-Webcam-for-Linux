@@ -18,6 +18,7 @@ services:
             - ../src/main.py:/stylecam/src/main.py
             - ../src/fakecam.py:/stylecam/src/fakecam.py
             - ../src/style_transfer/neural_style.py:/stylecam/src/style_transfer/neural_style.py
+            - ../src/style_transfer/neural_style_unoptimized.py:/stylecam/src/style_transfer/neural_style_unoptimized.py
         environment:
             # TODO USER adapt parameters. An explanation to each parameter can be found in ../src/main.py
             - STYLE_TRANSFER_MODEl_PATH=./data/style_transfer_models

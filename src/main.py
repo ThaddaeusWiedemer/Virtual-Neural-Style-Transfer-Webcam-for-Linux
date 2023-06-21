@@ -5,15 +5,16 @@ import sys
 from argparse import ArgumentParser
 import threading
 from fakecam import FakeCam
+from style_transfer.neural_style import StyleTransfer
 
 
 def parse_args():
     parser = ArgumentParser(description="Applying styles to your web cam image under \
                             GNU/Linux. For more information, please refer to: \
                             TODO")
-    parser.add_argument("-W", "--width", default=1280, type=int,
+    parser.add_argument("-W", "--width", default=1920, type=int,
                         help="Set real webcam width")
-    parser.add_argument("-H", "--height", default=720, type=int,
+    parser.add_argument("-H", "--height", default=1080, type=int,
                         help="Set real webcam height")
     parser.add_argument("-F", "--fps", default=30, type=int,
                         help="Set real webcam FPS")
@@ -27,7 +28,7 @@ def parse_args():
                         help="virtual akvcam output device path")
     parser.add_argument("-s", "--style-model-dir", default="./data/style_transfer_models_bu",
                         help="Folder which (subfolders) contains saved style transfer networks. Have to end with '.model' or '.pth'. Own styles created with https://github.com/pytorch/examples/tree/master/fast_neural_style can be used.")
-    parser.add_argument("-n", "--noise-suppressing", default=25.0, type=float,
+    parser.add_argument("-n", "--noise-suppressing", default=12.0, type=float,
                         help="higher values reduce noise introduced by the style transfer but might lead to skewed human faces")
     return parser.parse_args()
 
@@ -47,14 +48,14 @@ def main():
     )
 
     print("Running...")
-    print("Enter 1+BACKSPACE to deactivate and activate styling")
-    print("Enter 2+BACKSPACE to load the previous style")
-    print("Enter 3+BACKSPACE to load the next style")
-    print("Enter 4+BACKSPACE to decrease the scale factor of the model input")
-    print("Enter 5+BACKSPACE to increase the scale factor of the model input")
-    print("Enter 6+BACKSPACE to decrease the noise suppression factor")
-    print("Enter 7+BACKSPACE to increase the noise suppression factor")
-    print("Press c+BACKSPACE to exit")
+    print("Enter 1 + ENTER to deactivate and activate styling")
+    print("Enter 2 + ENTER to load the previous style")
+    print("Enter 3 + ENTER to load the next style")
+    print("Enter 4 + ENTER to decrease the scale factor of the model input")
+    print("Enter 5 + ENTER to increase the scale factor of the model input")
+    print("Enter 6 + ENTER to decrease the noise suppression factor")
+    print("Enter 7 + ENTER to increase the noise suppression factor")
+    print("Press c + ENTER to exit")
 
     def listen_for_input():
         # t = threading.currentThread()
@@ -79,9 +80,23 @@ def main():
             else:
                 print("input {} was not recognized".format(input_))
             time.sleep(1)
+    
+    def cycle_styles():
+        model_paths = cam._get_list_of_all_models(cam.model_dir)
+        style_number = 0
+        while True:
+            cam.set_style_number(style_number)
+            time.sleep(5)
+            style_number = (style_number + 1) % len(model_paths)
+            # cam.switch_styler()
+            # styler = StyleTransfer(model_paths[style_number])
+            # cam.styler = styler
 
     listen_thread = threading.Thread(target=listen_for_input, daemon=True)
     listen_thread.start()
+
+    style_control_thread = threading.Thread(target=cycle_styles, daemon=True)
+    style_control_thread.start()
 
     cam.run()  # loops
     print("exit 0")

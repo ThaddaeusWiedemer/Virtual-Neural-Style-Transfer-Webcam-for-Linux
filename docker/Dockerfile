@@ -25,9 +25,10 @@ RUN apt update && \
       && rm -rf /var/cache/apt/* /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip
-RUN pip install torch==1.8.1
+# RUN pip install torch==1.8.1
+RUN pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html
 RUN pip install opencv-python==4.5.1.48
-RUN pip install torchvision==0.9.1
+# RUN pip install torchvision==0.9.1
 RUN pip install numpy==1.19.5
 RUN pip install onnx==1.9.0
 
