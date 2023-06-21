@@ -13,3 +13,4 @@
 !.gitignore
 !readme.md
 !requirements.txt
+!startup.sh

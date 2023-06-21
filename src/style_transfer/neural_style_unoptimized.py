@@ -55,9 +55,7 @@ class StyleTransferUnoptimized:
             self._load_weights_into_model(self.style_model_weights_path, self.style_model)
             self.is_new_model = False
 
-        print(frame.shape)
         input = self._resize_crop(frame)
-        print(frame.shape)
         input = input.astype(np.float32)  # / 127.5 - 1
         content_transform = transforms.Compose([
             transforms.ToTensor(),

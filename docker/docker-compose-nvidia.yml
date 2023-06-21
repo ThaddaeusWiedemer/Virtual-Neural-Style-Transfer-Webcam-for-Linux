@@ -27,7 +27,7 @@ services:
             #Own styles created with https://github.com/pytorch/examples/tree/master/fast_neural_style can be used.
             - STYLE_SCALE_FACTOR=0.7
             #scale factor of the image sent the neural network
-            - NOISE_SUPRESSING_FACTOR=25
+            - NOISE_SUPRESSING_FACTOR=12
             #higher values reduce noise introduced by the style transfer but might lead to skewed human faces
 
         network_mode: host

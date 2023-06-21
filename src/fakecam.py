@@ -7,7 +7,7 @@ import numpy as np
 
 from akvcam import AkvCameraWriter
 from realcam import RealCam
-from style_transfer.neural_style import StyleTransfer
+# from style_transfer.neural_style import StyleTransfer
 from style_transfer.neural_style_unoptimized import StyleTransferUnoptimized
 
 

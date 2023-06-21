@@ -5,7 +5,7 @@ import sys
 from argparse import ArgumentParser
 import threading
 from fakecam import FakeCam
-from style_transfer.neural_style import StyleTransfer
+# from style_transfer.neural_style import StyleTransfer
 
 
 def parse_args():
@@ -86,7 +86,7 @@ def main():
         style_number = 0
         while True:
             cam.set_style_number(style_number)
-            time.sleep(5)
+            time.sleep(30)
             style_number = (style_number + 1) % len(model_paths)
             # cam.switch_styler()
             # styler = StyleTransfer(model_paths[style_number])
