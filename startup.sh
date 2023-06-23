@@ -35,7 +35,7 @@ fi
 # -vf hflip mirrors the video horizontally
 # -fs -video_size 1920x1080 displays the image fullscreen
 echo "Starting art mirror..."
-docker-compose -f docker-compose-nvidia.yml run stylecam & ffplay -fs -vf hflip -video_size 1920x1080 /dev/video12
+docker-compose -f docker-compose-nvidia.yml run stylecam & ffplay -fs -vf "transpose=3" -video_size 1920x1080 /dev/video12
 
 # stop the container if the video is closed
 # (this ugly workaround just stops all running containers, since the container was started in the background)
