@@ -48,4 +48,6 @@ RUN cp akvcam_config/* /etc/akvcam/
 RUN pip uninstall pycuda --yes
 RUN pip install pycuda==2021.1
 
+RUN pip install sshkeyboard
+
 

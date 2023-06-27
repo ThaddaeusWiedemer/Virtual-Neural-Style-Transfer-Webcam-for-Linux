@@ -12,11 +12,14 @@ services:
         shm_size: 1g
         devices:
             - /dev/video0:/dev/video0 # TODO USER replace with your video input device before the :
+            - /dev/video4:/dev/video4
         runtime: nvidia
         volumes:
             - ${STYLE_TRANSFER_MODEl_PATH}:/stylecam/data/style_transfer_models
+            - ../data/tueai_black.png:/stylecam/data/tueai_black.png
             - ../src/main.py:/stylecam/src/main.py
             - ../src/fakecam.py:/stylecam/src/fakecam.py
+            - ../src/realcam.py:/stylecam/src/realcam.py
             - ../src/style_transfer/neural_style.py:/stylecam/src/style_transfer/neural_style.py
             - ../src/style_transfer/neural_style_unoptimized.py:/stylecam/src/style_transfer/neural_style_unoptimized.py
         environment:

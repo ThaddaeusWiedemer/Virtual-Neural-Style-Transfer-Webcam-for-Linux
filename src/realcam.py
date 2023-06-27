@@ -1,6 +1,7 @@
 import threading
 
 import cv2
+import numpy as np
 
 
 class RealCam:
@@ -16,6 +17,7 @@ class RealCam:
         self._set_frame_rate(frame_rate)
         self.get_camera_values("new")
         self.current_frame = None
+        self.mirror = False
 
     def get_camera_values(self, status):
         print(
@@ -72,6 +74,8 @@ class RealCam:
             if grabbed:
                 with self.lock:
                     self.current_frame = frame.copy()
+                    if self.mirror:
+                        self.current_frame = np.flip(self.current_frame, axis=1)
 
     def read(self):
         with self.lock:
@@ -84,6 +88,9 @@ class RealCam:
         self.stopped = True
         self.thread.join()
         print("stopped real cam")
+    
+    def toggle_mirror(self):
+        self.mirror = not self.mirror
 
     @staticmethod
     def get_codec_args_from_string(codec):
