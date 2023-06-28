@@ -13,9 +13,13 @@ def parse_args():
     parser = ArgumentParser(description="Applying styles to your web cam image under \
                             GNU/Linux. For more information, please refer to: \
                             TODO")
-    parser.add_argument("-W", "--width", default=1920, type=int,
+    parser.add_argument("-W", "--cam-width", default=1920, type=int,
                         help="Set real webcam width")
-    parser.add_argument("-H", "--height", default=1080, type=int,
+    parser.add_argument("-H", "--cam-height", default=1080, type=int,
+                        help="Set real webcam height")
+    parser.add_argument("-oW", "--out-width", default=1280, type=int,
+                        help="Set real webcam width")
+    parser.add_argument("-oH", "--out-height", default=720, type=int,
                         help="Set real webcam height")
     parser.add_argument("-F", "--fps", default=30, type=int,
                         help="Set real webcam FPS")
@@ -42,8 +46,10 @@ def main():
     args = parse_args()
     cam = FakeCam(
         fps=args.fps,
-        width=args.width,
-        height=args.height,
+        cam_width=args.cam_width,
+        cam_height=args.cam_height,
+        out_width=args.out_width,
+        out_height=args.out_height,
         codec=args.codec,
         scale_factor=args.scale_factor,
         webcam1_path=args.webcam1_path,
@@ -56,12 +62,12 @@ def main():
 
     print("")
     print("Running...")
-    print("Press ENTER to switch cam.")
-    print("Press <- / -> to switch styles.")
-    print("Press m to mirror active cam.")
-    print("Press o to toggle the overlay.")
-    print("Press s to toggle styling.")
-    print("Press ESC to exit.")
+    print("Press  ENTER  to switch cam.")
+    print("Press <- / -> to switch styles manually.")
+    print("Press    m    to mirror active cam.")
+    print("Press    o    to toggle the overlay.")
+    print("Press    s    to toggle styling.")
+    print("Press   ESC   to exit.")
     print("")
     # print("Enter 1 + ENTER to deactivate and activate styling")
     # # print("Enter 2 + ENTER to load the previous style")
@@ -119,6 +125,7 @@ def main():
             # cam.switch_styler()
             # styler = StyleTransfer(model_paths[style_number])
             # cam.styler = styler
+
     def press(key):
         # print(key)
         if key == "enter":
@@ -139,7 +146,11 @@ def main():
 
         # listening for keys stops when ESC is pressed
         cam.stop()
-
+    
+    def cycle_styles():
+        while True:
+            time.sleep(60)
+            cam.set_next_style()
 
     listen_thread = threading.Thread(target=listen_for_input, daemon=True)
     listen_thread.start()
@@ -147,8 +158,8 @@ def main():
     # listen_thread = threading.Thread(target=listen_for_input, daemon=True)
     # listen_thread.start()
 
-    # style_control_thread = threading.Thread(target=cycle_styles, daemon=True)
-    # style_control_thread.start()
+    style_control_thread = threading.Thread(target=cycle_styles, daemon=True)
+    style_control_thread.start()
 
     cam.run()  # loops
     print("exit 0")

@@ -16,8 +16,10 @@ class FakeCam:
     def __init__(
             self,
             fps: int,
-            width: int,
-            height: int,
+            cam_width: int,
+            cam_height: int,
+            out_width: int,
+            out_height: int,
             codec: str,
             scale_factor: float,
             webcam1_path: str,
@@ -31,12 +33,14 @@ class FakeCam:
         self.check_webcam_existing(webcam2_path)
         self.check_webcam_existing(akvcam_path)
         self.scale_factor = scale_factor
-        self.real_cam1 = RealCam(webcam1_path, width, height, fps, codec)
-        self.real_cam2 = RealCam(webcam2_path, width, height, fps, codec)
+        self.real_cam1 = RealCam(webcam1_path, cam_width, cam_height, fps, codec)
+        self.real_cam2 = RealCam(webcam2_path, cam_width, cam_height, fps, codec)
         self.active_cam = self.real_cam1
         # In case the real webcam does not support the requested mode.
-        self.width = self.active_cam.get_frame_width()
-        self.height = self.active_cam.get_frame_height()
+        # self.width = self.active_cam.get_frame_width()
+        # self.height = self.active_cam.get_frame_height()
+        self.width = out_width
+        self.height = out_height
         self.fake_cam_writer = AkvCameraWriter(akvcam_path, self.width, self.height)
         self.style_number = 0
         self.model_dir = style_model_dir
@@ -74,8 +78,10 @@ class FakeCam:
         frame_count = 0
 
         # prepare static overlay frame
+        padding = 20
         overlay = np.array(Image.open(self.overlay_path))
-        overlay = np.pad(overlay, ((0, self.height - overlay.shape[0]), (self.width - overlay.shape[1], 0), (0, 0)))
+        overlay = np.pad(overlay, ((padding, self.height - padding - overlay.shape[0]),
+                                   (self.width - padding - overlay.shape[1], padding), (0, 0)))
         # overlay = self.styler._resize_crop(overlay)
 
         while not self.is_stop:
@@ -84,24 +90,47 @@ class FakeCam:
                 time.sleep(0.1)
                 continue
 
-            with self.styler_lock:
-                if self.display_overlay:
+            # crop to output size
+            h, w = current_frame.shape[:2]
+            if w / h > self.width / self.height:
+                # resize to correct height
+                new_w = int(self.height * w / h)
+                current_frame = cv2.resize(current_frame, (new_w, self.height),
+                           interpolation=cv2.INTER_AREA)
+                # crop along width
+                start = (new_w - self.width) // 2
+                stop = start + self.width
+                current_frame = current_frame[:, start:stop]
+
+            else:
+                # resize to correct width
+                new_h = int(self.width * h / w)
+                current_frame = cv2.resize(current_frame, (self.width, new_h),
+                           interpolation=cv2.INTER_AREA)
+                # crop along height
+                start = (new_h - self.height) // 2
+                stop = start + self.height
+                current_frame = current_frame[start:stop, :]
+
+            # add overlay to raw frame
+            if self.display_overlay:
                     current_frame = self._overlay_images(current_frame, overlay)
+
+            with self.styler_lock:
                 # superfluos, style transfer resizes to 720px along shortest dimension
                 # current_frame = cv2.resize(current_frame, (0, 0), fx=self.scale_factor, fy=self.scale_factor)
+
+                # apply style
                 if self.is_styling:
                     current_frame = self._supress_noise(current_frame)
                     try:
                         current_frame = self.styler.stylize(current_frame)
-                        # current_frame = overlay
-                        # current_frame = self._overlay_images(current_frame, overlay)
 
                     except Exception as e:
                         print("error during style transfer", e)
                         pass
-            # print(current_frame.shape)
-            # current_frame = self._overlay_images(current_frame, overlay)
-            # print(current_frame.shape)
+            
+            # send final frame to virtual came
             self.put_frame(current_frame)
             frame_count += 1
             td = time.monotonic() - t0
