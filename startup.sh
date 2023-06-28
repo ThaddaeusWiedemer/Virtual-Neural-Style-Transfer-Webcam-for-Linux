@@ -34,14 +34,17 @@ else
 fi
 
 # start the program
-# runs the stylecam in the docker container and displays the virtual webcam using ffplay
-# -vf hflip mirrors the video horizontally, -vf "transpose=3" flips vertically and rotates 90 degrees
-# -fs -video_size 1920x1080 displays the image fullscreen
 echo ""
 echo "Starting magic mirror..."
-# docker-compose -f docker-compose-nvidia.yml run stylecam & ffplay -video_size 1920x1080 /dev/video12
-ffplay -video_size 1008x504 /dev/video12 & docker-compose -f docker-compose-nvidia.yml run stylecam
 
-# stop the container if the video is closed
-# (this ugly workaround just stops all running containers, since the container was started in the background)
-# docker rm -f $(docker ps -q)
+# start ffplay in the background to display the virtual cam output and save the PID
+# -vf hflip mirrors the video horizontally, -vf "transpose=3" flips vertically and rotates 90 degrees
+# -fs -video_size 1920x1080 displays the image fullscreen
+ffplay -video_size 1008x504 -loglevel error /dev/video12 &
+ffplay_pid=$!
+
+# start the style-transfer
+docker-compose -f docker-compose-nvidia.yml run stylecam
+
+# kill ffplay if style-transfer finished
+kill $ffplay_pid
